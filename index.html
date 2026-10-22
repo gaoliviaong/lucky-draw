@@ -50,9 +50,32 @@ th{color:var(--muted);font-size:12px;text-transform:uppercase}
 .stat{flex:1;min-width:130px;text-align:center;background:#faf5ff;border-radius:14px;padding:14px}
 .warn{background:#fef3c7;color:#92400e;padding:10px 14px;border-radius:10px;font-size:14px;margin:10px 0}
 
+/* ===== DRAW THEMES (background templates) ===== */
+[data-theme="royal"]{--bg:radial-gradient(circle at 50% 30%,#6d28d9 0%,#3b0764 55%,#1e0b3a 100%);
+  --acc:#fde68a;--acc2:#f59e0b;--acc-dk:#b45309;--glow:#fbbf2488;--hl:#ec4899;--hl-dk:#9d174d;--hl-soft:#fbcfe8;--deep-a:#1e0b3aee;--sel:#3b0764;--btn-ink:#3b0764;
+  --r1a:#f472b6;--r1b:#fde047;--r2a:#60a5fa;--r2b:#a78bfa;--r3a:#34d399;--r3b:#fde047}
+[data-theme="ocean"]{--bg:radial-gradient(circle at 50% 30%,#0891b2 0%,#0c4a6e 55%,#06223a 100%);
+  --acc:#a5f3fc;--acc2:#22d3ee;--acc-dk:#0e7490;--glow:#67e8f988;--hl:#38bdf8;--hl-dk:#0369a1;--hl-soft:#e0f2fe;--deep-a:#06223aee;--sel:#0c4a6e;--btn-ink:#083344;
+  --r1a:#38bdf8;--r1b:#a5f3fc;--r2a:#818cf8;--r2b:#22d3ee;--r3a:#2dd4bf;--r3b:#bae6fd}
+[data-theme="gold"]{--bg:radial-gradient(circle at 50% 30%,#5b4210 0%,#2a1d04 55%,#0b0803 100%);
+  --acc:#fcd34d;--acc2:#d97706;--acc-dk:#78350f;--glow:#fbbf2499;--hl:#f59e0b;--hl-dk:#92400e;--hl-soft:#fef3c7;--deep-a:#0b0803ee;--sel:#2a1d04;--btn-ink:#2a1d04;
+  --r1a:#fbbf24;--r1b:#fff7ad;--r2a:#d97706;--r2b:#fcd34d;--r3a:#b45309;--r3b:#fde68a}
+[data-theme="festive"]{--bg:radial-gradient(circle at 50% 30%,#dc2626 0%,#7f1d1d 55%,#3f0a0a 100%);
+  --acc:#fde68a;--acc2:#f59e0b;--acc-dk:#b45309;--glow:#fbbf2488;--hl:#f43f5e;--hl-dk:#9f1239;--hl-soft:#fecdd3;--deep-a:#3f0a0aee;--sel:#7f1d1d;--btn-ink:#7f1d1d;
+  --r1a:#fbbf24;--r1b:#fde047;--r2a:#fb923c;--r2b:#fcd34d;--r3a:#fda4af;--r3b:#fde047}
+[data-theme="emerald"]{--bg:radial-gradient(circle at 50% 30%,#059669 0%,#064e3b 55%,#022c22 100%);
+  --acc:#d9f99d;--acc2:#84cc16;--acc-dk:#3f6212;--glow:#bef26488;--hl:#34d399;--hl-dk:#047857;--hl-soft:#d1fae5;--deep-a:#022c22ee;--sel:#064e3b;--btn-ink:#14532d;
+  --r1a:#34d399;--r1b:#d9f99d;--r2a:#2dd4bf;--r2b:#86efac;--r3a:#a3e635;--r3b:#fde047}
+.swatches{display:flex;gap:12px;flex-wrap:wrap;margin:6px 0 4px}
+.swatch{position:relative;width:130px;height:78px;border-radius:14px;background:var(--bg);cursor:pointer;overflow:hidden;display:flex;align-items:flex-end;padding:6px 10px;
+  color:var(--acc);font-weight:700;font-size:13px;border:3px solid transparent;transition:.15s}
+.swatch::before{content:"";position:absolute;left:0;right:0;top:12px;height:8px;background:linear-gradient(90deg,var(--r1a),var(--r1b));transform:rotate(-4deg)}
+.swatch:hover{transform:translateY(-2px)}
+.swatch.on{border-color:#fff;box-shadow:0 0 0 3px var(--p1)}
+
 /* ===== DRAW SCREEN ===== */
 #draw{position:fixed;inset:0;z-index:50;display:none;overflow:hidden;color:#fff;
-  background:radial-gradient(circle at 50% 30%,#6d28d9 0%,#3b0764 55%,#1e0b3a 100%);font-family:"Segoe UI",system-ui,sans-serif}
+  background:var(--bg);font-family:"Segoe UI",system-ui,sans-serif}
 #draw.on{display:flex;flex-direction:column;align-items:center}
 #draw svg.ribbons{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .rib{fill:none;stroke-linecap:round;animation:sway 6s ease-in-out infinite alternate;transform-origin:center}
@@ -62,36 +85,36 @@ th{color:var(--muted);font-size:12px;text-transform:uppercase}
 @keyframes fall{to{transform:translateY(112vh) rotate(720deg)}}
 #draw .close{position:absolute;top:14px;right:18px;z-index:5;background:#ffffff22;border:0;color:#fff;border-radius:50%;width:40px;height:40px;font-size:20px;cursor:pointer}
 #draw .stage{position:relative;z-index:2;width:100%;max-width:1100px;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;gap:14px;text-align:center}
-.pz-step{letter-spacing:3px;text-transform:uppercase;font-size:14px;color:#fde68a}
+.pz-step{letter-spacing:3px;text-transform:uppercase;font-size:14px;color:var(--acc)}
 .pz-wrap{display:flex;align-items:center;gap:22px;justify-content:center;flex-wrap:wrap}
-.pz-img{width:150px;height:150px;border-radius:20px;object-fit:cover;border:5px solid #fde68a;box-shadow:0 0 40px #fbbf2488;animation:bob 3s ease-in-out infinite;background:#ffffff22;display:grid;place-items:center;font-size:72px}
+.pz-img{width:150px;height:150px;border-radius:20px;object-fit:cover;border:5px solid var(--acc);box-shadow:0 0 40px var(--glow);animation:bob 3s ease-in-out infinite;background:#ffffff22;display:grid;place-items:center;font-size:72px}
 @keyframes bob{50%{transform:translateY(-8px) rotate(2deg)}}
-.pz-name{font-size:clamp(28px,4.5vw,52px);font-weight:900;background:linear-gradient(90deg,#fde68a,#fbcfe8,#fde68a);-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1.1}
+.pz-name{font-size:clamp(28px,4.5vw,52px);font-weight:900;background:linear-gradient(90deg,var(--acc),var(--hl-soft),var(--acc));-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1.1}
 .pz-desc{font-size:clamp(14px,1.8vw,20px);opacity:.85;max-width:620px}
 .pz-qty{display:inline-block;background:#ffffff22;border-radius:99px;padding:4px 16px;font-weight:700;margin-top:6px}
 .reel{--h:110px;width:min(760px,92vw);height:calc(var(--h)*3);overflow:hidden;border-radius:24px;position:relative;
-  background:linear-gradient(#ffffff10,#ffffff22,#ffffff10);border:3px solid #fde68a99;box-shadow:0 0 50px #ec489966, inset 0 0 40px #0006}
-.reel::before{content:"";position:absolute;left:0;right:0;top:var(--h);height:var(--h);background:linear-gradient(90deg,#ec489900,#ec489966,#ec489900);border-top:3px solid #fde68a;border-bottom:3px solid #fde68a;z-index:1;pointer-events:none}
-.reel::after{content:"";position:absolute;inset:0;background:linear-gradient(#1e0b3aee,transparent 30%,transparent 70%,#1e0b3aee);z-index:2;pointer-events:none}
+  background:linear-gradient(#ffffff10,#ffffff22,#ffffff10);border:3px solid color-mix(in srgb,var(--acc) 60%,transparent);box-shadow:0 0 50px color-mix(in srgb,var(--hl) 40%,transparent), inset 0 0 40px #0006}
+.reel::before{content:"";position:absolute;left:0;right:0;top:var(--h);height:var(--h);background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--hl) 40%,transparent),transparent);border-top:3px solid var(--acc);border-bottom:3px solid var(--acc);z-index:1;pointer-events:none}
+.reel::after{content:"";position:absolute;inset:0;background:linear-gradient(var(--deep-a),transparent 30%,transparent 70%,var(--deep-a));z-index:2;pointer-events:none}
 .strip{position:absolute;left:0;right:0;top:0;will-change:transform}
 .strip div{height:var(--h);display:flex;align-items:center;justify-content:center;font-size:clamp(28px,5vw,54px);font-weight:800;padding:0 20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .reel.win{animation:pulse .9s ease-in-out 3}
 @keyframes pulse{50%{box-shadow:0 0 90px #fde047,inset 0 0 40px #0006;transform:scale(1.03)}}
-.winfo{min-height:34px;font-size:clamp(16px,2vw,24px);color:#fde68a;font-weight:700}
+.winfo{min-height:34px;font-size:clamp(16px,2vw,24px);color:var(--acc);font-weight:700}
 .chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:900px}
 .chip{background:#ffffff26;border:1px solid #ffffff44;border-radius:99px;padding:6px 16px;font-weight:700;animation:pop .5s cubic-bezier(.3,1.6,.5,1)}
 @keyframes pop{from{transform:scale(0)}}
 .ctrl{display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:center}
-.go{border:0;border-radius:99px;padding:16px 46px;font-size:24px;font-weight:900;cursor:pointer;color:#3b0764;background:linear-gradient(#fde68a,#f59e0b);box-shadow:0 8px 0 #b45309,0 14px 30px #0006;transition:.1s}
-.go:active{transform:translateY(6px);box-shadow:0 2px 0 #b45309}
+.go{border:0;border-radius:99px;padding:16px 46px;font-size:24px;font-weight:900;cursor:pointer;color:var(--btn-ink);background:linear-gradient(var(--acc),var(--acc2));box-shadow:0 8px 0 var(--acc-dk),0 14px 30px #0006;transition:.1s}
+.go:active{transform:translateY(6px);box-shadow:0 2px 0 var(--acc-dk)}
 .go:disabled{opacity:.5;cursor:wait}
-.go.alt{background:linear-gradient(#fbcfe8,#ec4899);box-shadow:0 8px 0 #9d174d,0 14px 30px #0006;color:#fff}
+.go.alt{background:linear-gradient(var(--hl-soft),var(--hl));box-shadow:0 8px 0 var(--hl-dk),0 14px 30px #0006;color:#fff}
 .dsel{background:#ffffff22;border-radius:99px;padding:6px 14px;font-size:14px;display:flex;align-items:center;gap:8px}
-.dsel select{width:auto;background:#3b0764;color:#fff;border:1px solid #ffffff55;padding:4px 8px}
+.dsel select{width:auto;background:var(--sel);color:#fff;border:1px solid #ffffff55;padding:4px 8px}
 #confetti{position:fixed;inset:0;z-index:60;pointer-events:none}
-.fin h1{font-size:clamp(34px,6vw,72px);margin:0;background:linear-gradient(90deg,#fde68a,#f9a8d4,#a5b4fc,#fde68a);-webkit-background-clip:text;background-clip:text;color:transparent}
+.fin h1{font-size:clamp(34px,6vw,72px);margin:0;background:linear-gradient(90deg,var(--acc),var(--hl-soft),var(--r2b),var(--acc));-webkit-background-clip:text;background-clip:text;color:transparent}
 .fin .list{max-height:42vh;overflow:auto;width:min(900px,92vw);background:#ffffff1a;border-radius:18px;padding:14px 20px;text-align:left}
-.fin .list b{color:#fde68a}
+.fin .list b{color:var(--acc)}
 </style>
 </head>
 <body>
@@ -119,7 +142,9 @@ function save(){
 const uid=()=>Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const $=id=>document.getElementById(id);
-const ui={view:'home',id:null,tab:'participants',editPrize:null,search:'',settings:{duration:5,repeat:false,sound:true}};
+const THEMES=[['royal','Royal Purple'],['ocean','Ocean Blue'],['gold','Black & Gold'],['festive','Festive Red'],['emerald','Emerald Green']];
+const themeOk=t=>THEMES.some(x=>x[0]===t);
+const ui={view:'home',id:null,tab:'participants',editPrize:null,search:'',settings:{duration:5,repeat:false,sound:true,theme:themeOk(db.theme)?db.theme:'royal'}};
 const ev=()=>db.events.find(e=>e.id===ui.id);
 const wins=(e,pid)=>e.winners.filter(w=>w.prizeId===pid).length;
 
@@ -200,6 +225,12 @@ const A={
     a.download='participants-template.csv';a.click();
   },
   set(k,v){ui.settings[k]=v},
+  setTheme(t){
+    if(!themeOk(t))return;
+    ui.settings.theme=t;db.theme=t;save();
+    $('draw').dataset.theme=t;
+    if(!D)render();
+  },
 
   /* backup */
   exportBackup(){
@@ -360,6 +391,8 @@ function rDrawSetup(e,el){
     <input type="range" min="3" max="10" step="1" value="${s.duration}" style="width:100%;max-width:420px" oninput="A.set('duration',+this.value);$('dv').textContent=this.value">
     <label style="font-weight:400"><input type="checkbox" ${s.repeat?'checked':''} onchange="A.set('repeat',this.checked)"> Same person can win more than once</label>
     <label style="font-weight:400"><input type="checkbox" ${s.sound?'checked':''} onchange="A.set('sound',this.checked)"> Sound effects</label>
+    <label>Draw screen background</label>
+    <div class="swatches">${THEMES.map(([id,name])=>`<div class="swatch ${s.theme===id?'on':''}" data-theme="${id}" onclick="A.setTheme('${id}')">${name}</div>`).join('')}</div>
     ${issues.map(i=>`<div class="warn">⚠ ${i}</div>`).join('')}
     <p>${finished?`<button class="btn pri" onclick="startDraw(true)">🔄 Restart draw (clears winners)</button>`
       :`<button class="btn pri" style="font-size:20px;padding:14px 32px" ${issues.length?'disabled':''} onclick="startDraw(false)">${done?'▶ Continue the draw':'🎉 Start Lucky Draw'}</button>`}
@@ -409,9 +442,9 @@ function tick(){
 /* ================= draw screen ================= */
 let D=null;   // {e, pi, busy, last}
 const RIBBONS=`<svg class="ribbons" viewBox="0 0 1000 600" preserveAspectRatio="none">
-<defs><linearGradient id="g1" x1="0" x2="1"><stop offset="0" stop-color="#f472b6"/><stop offset="1" stop-color="#fde047"/></linearGradient>
-<linearGradient id="g2" x1="0" x2="1"><stop offset="0" stop-color="#60a5fa"/><stop offset="1" stop-color="#a78bfa"/></linearGradient>
-<linearGradient id="g3" x1="0" x2="1"><stop offset="0" stop-color="#34d399"/><stop offset="1" stop-color="#fde047"/></linearGradient></defs>
+<defs><linearGradient id="g1" x1="0" x2="1"><stop offset="0" style="stop-color:var(--r1a)"/><stop offset="1" style="stop-color:var(--r1b)"/></linearGradient>
+<linearGradient id="g2" x1="0" x2="1"><stop offset="0" style="stop-color:var(--r2a)"/><stop offset="1" style="stop-color:var(--r2b)"/></linearGradient>
+<linearGradient id="g3" x1="0" x2="1"><stop offset="0" style="stop-color:var(--r3a)"/><stop offset="1" style="stop-color:var(--r3b)"/></linearGradient></defs>
 <path class="rib" d="M-20 60 C 200 140, 300 -20, 520 50 S 850 120, 1020 30" stroke="url(#g1)" stroke-width="22"/>
 <path class="rib b" d="M-20 100 C 180 170, 330 40, 540 90 S 860 150, 1020 80" stroke="url(#g2)" stroke-width="12" opacity=".8"/>
 <path class="rib b" d="M-20 560 C 200 480, 320 620, 540 550 S 840 470, 1020 560" stroke="url(#g3)" stroke-width="22"/>
@@ -427,6 +460,7 @@ function startDraw(restart){
   if(restart){if(!confirm('This clears all recorded winners for this event. Continue?'))return;e.winners=[];save()}
   D={e,pi:Math.max(0,e.prizes.findIndex(p=>wins(e,p.id)<p.qty)),busy:false,last:null};
   if(D.pi<0)D.pi=0;
+  $('draw').dataset.theme=ui.settings.theme;
   $('draw').classList.add('on');
   if(document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(()=>{});
   renderDraw();
@@ -470,7 +504,8 @@ function updateDraw(){
     btn=empty?`<span class="winfo">No eligible participants left</span>${last?'':`<button class="go alt" onclick="nextPrize()">Skip →</button>`}`
       :`<button class="go" onclick="spin()">${got.length?'🎲 Draw next':'🎲 DRAW!'}</button>`;
   }else btn=last?`<button class="go alt" onclick="finish()">🎊 Finish</button>`:`<button class="go alt" onclick="nextPrize()">Reveal next prize →</button>`;
-  $('ctrl').innerHTML=`${btn}<div class="dsel">⏱ <select onchange="A.set('duration',+this.value)">${[3,4,5,6,7,8,9,10].map(n=>`<option ${n===d?'selected':''} value="${n}">${n}s</option>`).join('')}</select></div>`;
+  $('ctrl').innerHTML=`${btn}<div class="dsel">⏱ <select onchange="A.set('duration',+this.value)">${[3,4,5,6,7,8,9,10].map(n=>`<option ${n===d?'selected':''} value="${n}">${n}s</option>`).join('')}</select></div>
+    <div class="dsel">🎨 <select onchange="A.setTheme(this.value)">${THEMES.map(([id,name])=>`<option ${id===ui.settings.theme?'selected':''} value="${id}">${name}</option>`).join('')}</select></div>`;
 }
 function spin(){
   if(D.busy)return;
