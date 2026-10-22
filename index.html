@@ -1,0 +1,527 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lucky Draw</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#f6f3ff; --card:#fff; --ink:#26224a; --muted:#7a76a0; --line:#e6e1fa;
+  --p1:#7c3aed; --p2:#ec4899; --p3:#f59e0b; --ok:#10b981; --danger:#ef4444;
+  --grad:linear-gradient(135deg,#7c3aed,#ec4899);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--ink)}
+button,input,textarea,select{font:inherit}
+header.top{background:var(--grad);color:#fff;padding:16px 28px;display:flex;align-items:center;gap:14px;box-shadow:0 4px 18px #7c3aed44}
+header.top h1{margin:0;font-size:24px;cursor:pointer}
+header.top .sp{flex:1}
+main{max-width:1050px;margin:24px auto;padding:0 16px 60px}
+.card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 2px 12px #5b21b611;margin-bottom:18px}
+h2{margin:0 0 12px;font-size:20px} h3{margin:0 0 8px}
+.muted{color:var(--muted);font-size:14px}
+.btn{border:0;border-radius:10px;padding:9px 16px;cursor:pointer;font-weight:600;background:#ede9fe;color:var(--p1);transition:.15s}
+.btn:hover{transform:translateY(-1px);filter:brightness(.97)}
+.btn.pri{background:var(--grad);color:#fff;box-shadow:0 4px 12px #ec489944}
+.btn.dan{background:#fee2e2;color:var(--danger)}
+.btn.sm{padding:5px 10px;font-size:13px}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+input[type=text],input[type=number],input[type=email],textarea,select{width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--p1)}
+label{display:block;font-size:13px;font-weight:600;margin:10px 0 4px}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
+.tabs{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap}
+.tab{padding:10px 18px;border-radius:12px;background:#fff;cursor:pointer;font-weight:600;border:2px solid transparent}
+.tab.on{background:var(--grad);color:#fff}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+th{color:var(--muted);font-size:12px;text-transform:uppercase}
+.evcard{cursor:pointer;border:2px solid transparent}
+.evcard:hover{border-color:var(--p2)}
+.badge{display:inline-block;background:#ede9fe;color:var(--p1);border-radius:99px;padding:2px 10px;font-size:12px;font-weight:600}
+.prize{display:flex;gap:14px;align-items:center}
+.prize img,.prize .noimg{width:84px;height:84px;border-radius:12px;object-fit:cover;background:#f3e8ff;display:grid;place-items:center;font-size:36px;flex:none}
+.prize .info{flex:1;min-width:0}
+.num{width:34px;height:34px;border-radius:50%;background:var(--grad);color:#fff;display:grid;place-items:center;font-weight:700;flex:none}
+.scroll{max-height:380px;overflow:auto}
+.big{font-size:30px;font-weight:800}
+.stat{flex:1;min-width:130px;text-align:center;background:#faf5ff;border-radius:14px;padding:14px}
+.warn{background:#fef3c7;color:#92400e;padding:10px 14px;border-radius:10px;font-size:14px;margin:10px 0}
+
+/* ===== DRAW SCREEN ===== */
+#draw{position:fixed;inset:0;z-index:50;display:none;overflow:hidden;color:#fff;
+  background:radial-gradient(circle at 50% 30%,#6d28d9 0%,#3b0764 55%,#1e0b3a 100%);font-family:"Segoe UI",system-ui,sans-serif}
+#draw.on{display:flex;flex-direction:column;align-items:center}
+#draw svg.ribbons{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.rib{fill:none;stroke-linecap:round;animation:sway 6s ease-in-out infinite alternate;transform-origin:center}
+.rib.b{animation-duration:8s;animation-direction:alternate-reverse}
+@keyframes sway{from{transform:translateY(-6px) skewX(-1deg)}to{transform:translateY(8px) skewX(1deg)}}
+.streamer{position:absolute;top:-30px;width:10px;height:34px;border-radius:3px;opacity:.85;animation:fall linear infinite;pointer-events:none}
+@keyframes fall{to{transform:translateY(112vh) rotate(720deg)}}
+#draw .close{position:absolute;top:14px;right:18px;z-index:5;background:#ffffff22;border:0;color:#fff;border-radius:50%;width:40px;height:40px;font-size:20px;cursor:pointer}
+#draw .stage{position:relative;z-index:2;width:100%;max-width:1100px;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;gap:14px;text-align:center}
+.pz-step{letter-spacing:3px;text-transform:uppercase;font-size:14px;color:#fde68a}
+.pz-wrap{display:flex;align-items:center;gap:22px;justify-content:center;flex-wrap:wrap}
+.pz-img{width:150px;height:150px;border-radius:20px;object-fit:cover;border:5px solid #fde68a;box-shadow:0 0 40px #fbbf2488;animation:bob 3s ease-in-out infinite;background:#ffffff22;display:grid;place-items:center;font-size:72px}
+@keyframes bob{50%{transform:translateY(-8px) rotate(2deg)}}
+.pz-name{font-size:clamp(28px,4.5vw,52px);font-weight:900;background:linear-gradient(90deg,#fde68a,#fbcfe8,#fde68a);-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1.1}
+.pz-desc{font-size:clamp(14px,1.8vw,20px);opacity:.85;max-width:620px}
+.pz-qty{display:inline-block;background:#ffffff22;border-radius:99px;padding:4px 16px;font-weight:700;margin-top:6px}
+.reel{--h:110px;width:min(760px,92vw);height:calc(var(--h)*3);overflow:hidden;border-radius:24px;position:relative;
+  background:linear-gradient(#ffffff10,#ffffff22,#ffffff10);border:3px solid #fde68a99;box-shadow:0 0 50px #ec489966, inset 0 0 40px #0006}
+.reel::before{content:"";position:absolute;left:0;right:0;top:var(--h);height:var(--h);background:linear-gradient(90deg,#ec489900,#ec489966,#ec489900);border-top:3px solid #fde68a;border-bottom:3px solid #fde68a;z-index:1;pointer-events:none}
+.reel::after{content:"";position:absolute;inset:0;background:linear-gradient(#1e0b3aee,transparent 30%,transparent 70%,#1e0b3aee);z-index:2;pointer-events:none}
+.strip{position:absolute;left:0;right:0;top:0;will-change:transform}
+.strip div{height:var(--h);display:flex;align-items:center;justify-content:center;font-size:clamp(28px,5vw,54px);font-weight:800;padding:0 20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.reel.win{animation:pulse .9s ease-in-out 3}
+@keyframes pulse{50%{box-shadow:0 0 90px #fde047,inset 0 0 40px #0006;transform:scale(1.03)}}
+.winfo{min-height:34px;font-size:clamp(16px,2vw,24px);color:#fde68a;font-weight:700}
+.chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:900px}
+.chip{background:#ffffff26;border:1px solid #ffffff44;border-radius:99px;padding:6px 16px;font-weight:700;animation:pop .5s cubic-bezier(.3,1.6,.5,1)}
+@keyframes pop{from{transform:scale(0)}}
+.ctrl{display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:center}
+.go{border:0;border-radius:99px;padding:16px 46px;font-size:24px;font-weight:900;cursor:pointer;color:#3b0764;background:linear-gradient(#fde68a,#f59e0b);box-shadow:0 8px 0 #b45309,0 14px 30px #0006;transition:.1s}
+.go:active{transform:translateY(6px);box-shadow:0 2px 0 #b45309}
+.go:disabled{opacity:.5;cursor:wait}
+.go.alt{background:linear-gradient(#fbcfe8,#ec4899);box-shadow:0 8px 0 #9d174d,0 14px 30px #0006;color:#fff}
+.dsel{background:#ffffff22;border-radius:99px;padding:6px 14px;font-size:14px;display:flex;align-items:center;gap:8px}
+.dsel select{width:auto;background:#3b0764;color:#fff;border:1px solid #ffffff55;padding:4px 8px}
+#confetti{position:fixed;inset:0;z-index:60;pointer-events:none}
+.fin h1{font-size:clamp(34px,6vw,72px);margin:0;background:linear-gradient(90deg,#fde68a,#f9a8d4,#a5b4fc,#fde68a);-webkit-background-clip:text;background-clip:text;color:transparent}
+.fin .list{max-height:42vh;overflow:auto;width:min(900px,92vw);background:#ffffff1a;border-radius:18px;padding:14px 20px;text-align:left}
+.fin .list b{color:#fde68a}
+</style>
+</head>
+<body>
+<header class="top">
+  <span style="font-size:30px">🎉</span><h1 onclick="A.home()">Lucky Draw</h1><div class="sp"></div>
+  <span class="muted" style="color:#fff9">Data is saved in this browser</span>
+  <button class="btn sm" onclick="A.exportBackup()" title="Download all events as a JSON file">⬇ Backup</button>
+  <button class="btn sm" onclick="$('restore').click()" title="Load events from a backup file">⬆ Restore</button>
+  <input type="file" id="restore" accept=".json,application/json" hidden onchange="A.importBackup(this)">
+</header>
+<main id="app"></main>
+
+<div id="draw"></div>
+<canvas id="confetti"></canvas>
+
+<script>
+/* ================= data ================= */
+const KEY='luckydraw.v1';
+let db={events:[]};
+try{db=JSON.parse(localStorage.getItem(KEY))||db}catch(e){}
+function save(){
+  try{localStorage.setItem(KEY,JSON.stringify(db))}
+  catch(e){alert('Could not save: browser storage is full. Try smaller prize images.')}
+}
+const uid=()=>Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $=id=>document.getElementById(id);
+const ui={view:'home',id:null,tab:'participants',editPrize:null,search:'',settings:{duration:5,repeat:false,sound:true}};
+const ev=()=>db.events.find(e=>e.id===ui.id);
+const wins=(e,pid)=>e.winners.filter(w=>w.prizeId===pid).length;
+
+/* ================= actions ================= */
+const A={
+  home(){ui.view='home';ui.id=null;render()},
+  open(id){ui.view='event';ui.id=id;ui.tab='participants';ui.editPrize=null;render()},
+  tab(t){ui.tab=t;ui.editPrize=null;render()},
+  newEvent(){
+    const name=$('evname').value.trim(); if(!name)return $('evname').focus();
+    db.events.push({id:uid(),name,participants:[],prizes:[],winners:[]});save();render();
+  },
+  delEvent(id,e){e.stopPropagation();if(confirm('Delete this event and all its data?')){db.events=db.events.filter(x=>x.id!==id);save();render()}},
+
+  /* participants */
+  addPaste(){
+    const e=ev(),lines=$('paste').value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+    let n=0;
+    for(const l of lines){
+      const c=l.split(/\t|,|;/).map(s=>s.trim());
+      if(!c[0])continue;
+      e.participants.push({id:uid(),name:c[0],email:c[1]||'',phone:c[2]||'',company:c[3]||''});n++;
+    }
+    save();render();toast(`Added ${n} participant(s)`);
+  },
+  addOne(){
+    const e=ev(),g=k=>$(k).value.trim();
+    if(!g('p_name'))return $('p_name').focus();
+    e.participants.push({id:uid(),name:g('p_name'),email:g('p_email'),phone:g('p_phone'),company:g('p_company')});
+    save();render();
+  },
+  async importFile(inp){
+    const f=inp.files[0]; if(!f)return;
+    try{
+      let rows;
+      if(window.XLSX){
+        const wb=XLSX.read(await f.arrayBuffer(),{type:'array'});
+        rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:'',raw:false});
+      }else if(/\.csv$/i.test(f.name)){
+        rows=parseCSV(await f.text());
+      }else throw new Error('Excel reader not loaded (needs internet). Use a CSV file instead.');
+      const n=importRows(ev(),rows);
+      save();render();toast(`Imported ${n} participant(s) from ${f.name}`);
+    }catch(err){alert('Import failed: '+err.message)}
+    inp.value='';
+  },
+  delPart(id){const e=ev();e.participants=e.participants.filter(p=>p.id!==id);save();render()},
+  clearParts(){if(confirm('Remove ALL participants?')){ev().participants=[];save();render()}},
+  search(v){ui.search=v;renderTable()},
+
+  /* prizes */
+  editPrize(id){ui.editPrize=id;render();window.scrollTo(0,0)},
+  async savePrize(){
+    const e=ev(),name=$('z_name').value.trim(); if(!name)return $('z_name').focus();
+    const data={name,desc:$('z_desc').value.trim(),qty:Math.max(1,parseInt($('z_qty').value)||1),image:ui.tmpImg||''};
+    if(ui.editPrize==='new')e.prizes.push({id:uid(),...data});
+    else Object.assign(e.prizes.find(p=>p.id===ui.editPrize),data);
+    ui.editPrize=null;ui.tmpImg=null;save();render();
+  },
+  async pickImg(inp){
+    const f=inp.files[0]; if(!f)return;
+    ui.tmpImg=await shrink(f,640);$('imgprev').innerHTML=`<img src="${ui.tmpImg}" style="width:100px;height:100px;object-fit:cover;border-radius:12px">`;
+  },
+  movePrize(i,d){const a=ev().prizes,j=i+d;if(j<0||j>=a.length)return;[a[i],a[j]]=[a[j],a[i]];save();render()},
+  delPrize(id){if(confirm('Delete this prize?')){const e=ev();e.prizes=e.prizes.filter(p=>p.id!==id);e.winners=e.winners.filter(w=>w.prizeId!==id);save();render()}},
+
+  /* winners */
+  clearWinners(){if(confirm('Clear all recorded winners for this event?')){ev().winners=[];save();render()}},
+  exportWinners(){
+    const e=ev(),rows=[['Prize','Winner','Email','Phone','Company','Time']];
+    e.prizes.forEach(p=>e.winners.filter(w=>w.prizeId===p.id).forEach(w=>rows.push([w.prizeName,w.name,w.email,w.phone,w.company,new Date(w.at).toLocaleString()])));
+    const csv='﻿'+rows.map(r=>r.map(c=>`"${String(c??'').replace(/"/g,'""')}"`).join(',')).join('\r\n');
+    const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+    a.download=`winners-${e.name.replace(/\W+/g,'_')}.csv`;a.click();
+  },
+  downloadTemplate(){
+    const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['Name,Email,Phone,Company\r\nAlice Tan,alice@example.com,012-3456789,ACME\r\n'],{type:'text/csv'}));
+    a.download='participants-template.csv';a.click();
+  },
+  set(k,v){ui.settings[k]=v},
+
+  /* backup */
+  exportBackup(){
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([JSON.stringify({app:KEY,exportedAt:new Date().toISOString(),...db})],{type:'application/json'}));
+    a.download=`lucky-draw-backup-${new Date().toISOString().slice(0,10)}.json`;a.click();
+  },
+  async importBackup(inp){
+    const f=inp.files[0]; if(!f)return;
+    try{
+      const data=JSON.parse(await f.text());
+      if(!Array.isArray(data.events))throw new Error('Not a Lucky Draw backup file.');
+      if(!confirm(`Restore ${data.events.length} event(s)? Events with the same ID will be overwritten; others are kept.`))return;
+      for(const e of data.events){
+        const i=db.events.findIndex(x=>x.id===e.id);
+        if(i>=0)db.events[i]=e;else db.events.push(e);
+      }
+      save();A.home();toast(`Restored ${data.events.length} event(s)`);
+    }catch(err){alert('Restore failed: '+err.message)}
+    inp.value='';
+  }
+};
+
+/* ================= import helpers ================= */
+function parseCSV(t){
+  const rows=[];let r=[],c='',q=false;
+  for(let i=0;i<t.length;i++){const ch=t[i];
+    if(q){if(ch=='"'){if(t[i+1]=='"'){c+='"';i++}else q=false}else c+=ch}
+    else if(ch=='"')q=true;
+    else if(ch==','){r.push(c);c=''}
+    else if(ch=='\n'||ch=='\r'){if(ch=='\r'&&t[i+1]=='\n')i++;r.push(c);rows.push(r);r=[];c=''}
+    else c+=ch}
+  if(c||r.length){r.push(c);rows.push(r)}
+  return rows;
+}
+function importRows(e,rows){
+  rows=rows.filter(r=>r.some(c=>String(c).trim()));
+  if(!rows.length)return 0;
+  const norm=s=>String(s).toLowerCase().replace(/[^a-z]/g,'');
+  const head=rows[0].map(norm);
+  const find=(...k)=>head.findIndex(h=>k.some(x=>h.includes(x)));
+  let ci={name:find('name','nama'),email:find('email','mail'),phone:find('phone','mobile','tel','contact','hp'),company:find('company','organi','firm','syarikat')};
+  let start=1;
+  if(ci.name<0){ci={name:0,email:1,phone:2,company:3};start=0}   // no header row -> positional
+  let n=0;
+  for(const r of rows.slice(start)){
+    const g=i=>i>=0?String(r[i]??'').trim():'';
+    if(!g(ci.name))continue;
+    e.participants.push({id:uid(),name:g(ci.name),email:g(ci.email),phone:g(ci.phone),company:g(ci.company)});n++;
+  }
+  return n;
+}
+function shrink(file,max){
+  return new Promise(res=>{
+    const img=new Image(),u=URL.createObjectURL(file);
+    img.onload=()=>{const s=Math.min(1,max/Math.max(img.width,img.height)),c=document.createElement('canvas');
+      c.width=img.width*s;c.height=img.height*s;c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      URL.revokeObjectURL(u);res(c.toDataURL('image/jpeg',.82))};
+    img.src=u;
+  });
+}
+function toast(m){
+  const t=document.createElement('div');t.textContent=m;
+  t.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#26224a;color:#fff;padding:10px 20px;border-radius:99px;z-index:99;font-weight:600';
+  document.body.appendChild(t);setTimeout(()=>t.remove(),2500);
+}
+
+/* ================= admin rendering ================= */
+function render(){
+  const app=$('app');
+  if(ui.view==='home'){
+    app.innerHTML=`
+    <div class="card"><h2>🎪 New lucky draw event</h2>
+      <div class="row"><input type="text" id="evname" placeholder="e.g. Annual Dinner 2026" style="flex:1;min-width:220px" onkeydown="if(event.key==='Enter')A.newEvent()">
+      <button class="btn pri" onclick="A.newEvent()">Create event</button></div></div>
+    <div class="grid">${db.events.map(e=>`
+      <div class="card evcard" onclick="A.open('${e.id}')">
+        <div class="row"><h3 style="flex:1;margin:0">${esc(e.name)}</h3><button class="btn dan sm" onclick="A.delEvent('${e.id}',event)">✕</button></div>
+        <p class="muted">👥 ${e.participants.length} participants · 🎁 ${e.prizes.length} prizes · 🏆 ${e.winners.length} winners</p></div>`).join('')
+      ||'<p class="muted">No events yet. Create one above to get started.</p>'}</div>`;
+    return;
+  }
+  const e=ev(); if(!e)return A.home();
+  const tabs=[['participants','👥 Participants'],['prizes','🎁 Prizes'],['draw','🎰 Start Draw'],['winners','🏆 Winners']];
+  app.innerHTML=`
+    <div class="row" style="margin-bottom:14px"><button class="btn" onclick="A.home()">← Events</button><h2 style="margin:0">${esc(e.name)}</h2></div>
+    <div class="tabs">${tabs.map(([k,l])=>`<div class="tab ${ui.tab===k?'on':''}" onclick="A.tab('${k}')">${l}</div>`).join('')}</div>
+    <div id="tabbody"></div>`;
+  ({participants:rParticipants,prizes:rPrizes,draw:rDrawSetup,winners:rWinners})[ui.tab](e,$('tabbody'));
+}
+
+function rParticipants(e,el){
+  el.innerHTML=`
+  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr))">
+    <div class="card"><h2>📂 Import Excel / CSV</h2>
+      <p class="muted">Columns: <b>Name</b>, Email, Phone (optional), Company (optional). First row should be the header.</p>
+      <input type="file" accept=".xlsx,.xls,.csv" onchange="A.importFile(this)">
+      <p><button class="btn sm" onclick="A.downloadTemplate()">⬇ Download CSV template</button></p></div>
+    <div class="card"><h2>📝 Paste multiple names</h2>
+      <p class="muted">One per line. Optional: <code>name, email, phone, company</code></p>
+      <textarea id="paste" rows="5" placeholder="Alice Tan&#10;Bob Lee, bob@mail.com, 012-345, ACME"></textarea>
+      <p><button class="btn pri" onclick="A.addPaste()">Add all</button></p></div>
+    <div class="card"><h2>➕ Add one person</h2>
+      <div class="row"><input type="text" id="p_name" placeholder="Name *" style="flex:1 1 140px"><input type="text" id="p_email" placeholder="Email" style="flex:1 1 140px"></div>
+      <div class="row" style="margin-top:8px"><input type="text" id="p_phone" placeholder="Phone" style="flex:1 1 140px"><input type="text" id="p_company" placeholder="Company" style="flex:1 1 140px"></div>
+      <p><button class="btn" onclick="A.addOne()">Add</button></p></div>
+  </div>
+  <div class="card"><div class="row"><h2 style="flex:1;margin:0">Participants (${e.participants.length})</h2>
+    <input type="text" placeholder="🔍 Search" style="max-width:220px" value="${esc(ui.search)}" oninput="A.search(this.value)">
+    ${e.participants.length?'<button class="btn dan sm" onclick="A.clearParts()">Clear all</button>':''}</div>
+    <div class="scroll" id="ptable" style="margin-top:10px"></div></div>`;
+  renderTable();
+}
+function renderTable(){
+  const e=ev(),el=$('ptable'); if(!el)return;
+  const q=ui.search.toLowerCase();
+  const list=e.participants.filter(p=>!q||[p.name,p.email,p.company,p.phone].join(' ').toLowerCase().includes(q));
+  el.innerHTML=list.length?`<table><tr><th>#</th><th>Name</th><th>Email</th><th>Phone</th><th>Company</th><th></th></tr>${
+    list.map((p,i)=>`<tr><td>${i+1}</td><td>${esc(p.name)}</td><td>${esc(p.email)}</td><td>${esc(p.phone)}</td><td>${esc(p.company)}</td>
+    <td><button class="btn dan sm" onclick="A.delPart('${p.id}')">✕</button></td></tr>`).join('')}</table>`:'<p class="muted">No participants.</p>';
+}
+
+function rPrizes(e,el){
+  let form='';
+  if(ui.editPrize){
+    const p=ui.editPrize==='new'?{name:'',desc:'',qty:1,image:''}:e.prizes.find(x=>x.id===ui.editPrize);
+    if(ui.tmpImg===undefined||ui.tmpImg===null)ui.tmpImg=p.image;
+    form=`<div class="card" style="border:2px solid var(--p2)"><h2>${ui.editPrize==='new'?'New prize':'Edit prize'}</h2>
+      <label>Prize name *</label><input type="text" id="z_name" value="${esc(p.name)}" placeholder="e.g. Grand Prize – iPhone">
+      <label>Description</label><textarea id="z_desc" rows="2" placeholder="Short description shown on the draw screen">${esc(p.desc)}</textarea>
+      <div class="row"><div><label>Number of winners</label><input type="number" id="z_qty" min="1" value="${p.qty}" style="width:140px"></div>
+      <div><label>Image</label><input type="file" accept="image/*" onchange="A.pickImg(this)"></div>
+      <div id="imgprev">${ui.tmpImg?`<img src="${ui.tmpImg}" style="width:100px;height:100px;object-fit:cover;border-radius:12px">`:''}</div></div>
+      <p><button class="btn pri" onclick="A.savePrize()">Save prize</button> <button class="btn" onclick="ui.tmpImg=null;A.tab('prizes')">Cancel</button></p></div>`;
+  }
+  el.innerHTML=form+`<div class="card"><div class="row"><h2 style="flex:1;margin:0">Prizes (in the order they will be revealed)</h2>
+    <button class="btn pri" onclick="ui.tmpImg=null;A.editPrize('new')">+ Add prize</button></div>
+    <p class="muted">Tip: put the smaller prizes first and the grand prize last for more excitement.</p>
+    ${e.prizes.map((p,i)=>`<div class="prize" style="padding:12px 0;border-top:1px solid var(--line)">
+      <div class="num">${i+1}</div>
+      ${p.image?`<img src="${p.image}">`:'<div class="noimg">🎁</div>'}
+      <div class="info"><b>${esc(p.name)}</b> <span class="badge">${p.qty} winner${p.qty>1?'s':''}</span><div class="muted">${esc(p.desc)}</div></div>
+      <div class="row" style="gap:4px"><button class="btn sm" onclick="A.movePrize(${i},-1)">↑</button><button class="btn sm" onclick="A.movePrize(${i},1)">↓</button>
+      <button class="btn sm" onclick="ui.tmpImg=null;A.editPrize('${p.id}')">Edit</button><button class="btn dan sm" onclick="A.delPrize('${p.id}')">✕</button></div></div>`).join('')||'<p class="muted">No prizes yet.</p>'}</div>`;
+}
+
+function rDrawSetup(e,el){
+  const slots=e.prizes.reduce((a,p)=>a+p.qty,0),done=e.winners.length,s=ui.settings;
+  const issues=[];
+  if(!e.participants.length)issues.push('Add participants first.');
+  if(!e.prizes.length)issues.push('Add at least one prize.');
+  if(!s.repeat&&slots>e.participants.length)issues.push(`There are ${slots} prize slots but only ${e.participants.length} participants. Enable "same person can win more than once" or reduce winners.`);
+  const finished=e.prizes.length&&e.prizes.every(p=>wins(e,p.id)>=p.qty);
+  el.innerHTML=`<div class="card"><h2>🎰 Ready to draw?</h2>
+    <div class="row" style="margin-bottom:14px"><div class="stat"><div class="big">${e.participants.length}</div>participants</div>
+    <div class="stat"><div class="big">${e.prizes.length}</div>prizes</div><div class="stat"><div class="big">${done}/${slots}</div>winners drawn</div></div>
+    <label>Scrolling time: <b id="dv">${s.duration}</b> seconds</label>
+    <input type="range" min="3" max="10" step="1" value="${s.duration}" style="width:100%;max-width:420px" oninput="A.set('duration',+this.value);$('dv').textContent=this.value">
+    <label style="font-weight:400"><input type="checkbox" ${s.repeat?'checked':''} onchange="A.set('repeat',this.checked)"> Same person can win more than once</label>
+    <label style="font-weight:400"><input type="checkbox" ${s.sound?'checked':''} onchange="A.set('sound',this.checked)"> Sound effects</label>
+    ${issues.map(i=>`<div class="warn">⚠ ${i}</div>`).join('')}
+    <p>${finished?`<button class="btn pri" onclick="startDraw(true)">🔄 Restart draw (clears winners)</button>`
+      :`<button class="btn pri" style="font-size:20px;padding:14px 32px" ${issues.length?'disabled':''} onclick="startDraw(false)">${done?'▶ Continue the draw':'🎉 Start Lucky Draw'}</button>`}
+    ${done&&!finished?`<button class="btn" onclick="startDraw(true)">Restart from beginning</button>`:''}</p>
+    <p class="muted">Tip: press <b>F11</b> for fullscreen. On the draw screen press <b>Space</b> or <b>Enter</b> to draw / continue, <b>Esc</b> to exit.</p></div>`;
+}
+
+function rWinners(e,el){
+  el.innerHTML=`<div class="card"><div class="row"><h2 style="flex:1;margin:0">🏆 Winners record</h2>
+    <button class="btn" ${e.winners.length?'':'disabled'} onclick="A.exportWinners()">⬇ Export CSV</button>
+    <button class="btn dan" ${e.winners.length?'':'disabled'} onclick="A.clearWinners()">Clear winners</button></div>
+    ${e.prizes.map(p=>{const w=e.winners.filter(x=>x.prizeId===p.id);return w.length?`<h3 style="margin-top:18px">🎁 ${esc(p.name)} <span class="badge">${w.length}/${p.qty}</span></h3>
+      <table><tr><th>Winner</th><th>Email</th><th>Phone</th><th>Company</th><th>Time</th></tr>${w.map(x=>`<tr><td><b>${esc(x.name)}</b></td><td>${esc(x.email)}</td><td>${esc(x.phone)}</td><td>${esc(x.company)}</td><td>${new Date(x.at).toLocaleTimeString()}</td></tr>`).join('')}</table>`:''}).join('')
+    ||''}${e.winners.length?'':'<p class="muted">No winners yet.</p>'}</div>`;
+}
+
+/* ================= sound & confetti ================= */
+let actx;
+function tone(freqs,dur=.18,type='triangle',gap=.12){
+  if(!ui.settings.sound)return;
+  try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+    freqs.forEach((f,i)=>{const o=actx.createOscillator(),g=actx.createGain(),t=actx.currentTime+i*gap;
+      o.type=type;o.frequency.value=f;g.gain.setValueAtTime(.18,t);g.gain.exponentialRampToValueAtTime(.001,t+dur);
+      o.connect(g).connect(actx.destination);o.start(t);o.stop(t+dur)})}catch(e){}
+}
+const fanfare=()=>tone([523,659,784,1047,784,1047,1319],.25,'triangle',.11);
+const drumroll=()=>tone([300,350,400],.1,'square',.08);
+
+const cv=$('confetti'),cx=cv.getContext('2d');let parts=[],raf=0;
+function sizeCv(){cv.width=innerWidth;cv.height=innerHeight}addEventListener('resize',sizeCv);sizeCv();
+function burst(n=160){
+  const cols=['#fde047','#f472b6','#a78bfa','#34d399','#60a5fa','#fb923c','#fff'];
+  for(let i=0;i<n;i++){const left=i%2;
+    parts.push({x:left?cv.width:0,y:cv.height*.75,vx:(left?-1:1)*(4+Math.random()*10),vy:-(8+Math.random()*14),
+      w:6+Math.random()*8,h:10+Math.random()*10,r:Math.random()*6,vr:(Math.random()-.5)*.4,c:cols[i%cols.length],life:140+Math.random()*80})}
+  if(!raf)raf=requestAnimationFrame(tick);
+}
+function tick(){
+  cx.clearRect(0,0,cv.width,cv.height);
+  parts=parts.filter(p=>p.life-->0&&p.y<cv.height+40);
+  for(const p of parts){p.x+=p.vx;p.y+=p.vy;p.vy+=.28;p.vx*=.99;p.r+=p.vr;
+    cx.save();cx.translate(p.x,p.y);cx.rotate(p.r);cx.fillStyle=p.c;cx.globalAlpha=Math.min(1,p.life/40);cx.fillRect(-p.w/2,-p.h/2,p.w,p.h);cx.restore()}
+  raf=parts.length?requestAnimationFrame(tick):0;
+  if(!raf)cx.clearRect(0,0,cv.width,cv.height);
+}
+
+/* ================= draw screen ================= */
+let D=null;   // {e, pi, busy, last}
+const RIBBONS=`<svg class="ribbons" viewBox="0 0 1000 600" preserveAspectRatio="none">
+<defs><linearGradient id="g1" x1="0" x2="1"><stop offset="0" stop-color="#f472b6"/><stop offset="1" stop-color="#fde047"/></linearGradient>
+<linearGradient id="g2" x1="0" x2="1"><stop offset="0" stop-color="#60a5fa"/><stop offset="1" stop-color="#a78bfa"/></linearGradient>
+<linearGradient id="g3" x1="0" x2="1"><stop offset="0" stop-color="#34d399"/><stop offset="1" stop-color="#fde047"/></linearGradient></defs>
+<path class="rib" d="M-20 60 C 200 140, 300 -20, 520 50 S 850 120, 1020 30" stroke="url(#g1)" stroke-width="22"/>
+<path class="rib b" d="M-20 100 C 180 170, 330 40, 540 90 S 860 150, 1020 80" stroke="url(#g2)" stroke-width="12" opacity=".8"/>
+<path class="rib b" d="M-20 560 C 200 480, 320 620, 540 550 S 840 470, 1020 560" stroke="url(#g3)" stroke-width="22"/>
+<path class="rib" d="M-20 520 C 180 450, 330 580, 540 515 S 860 440, 1020 520" stroke="url(#g1)" stroke-width="10" opacity=".8"/>
+<path class="rib" d="M30 -10 C 90 150, -30 300, 40 610" stroke="url(#g2)" stroke-width="14" opacity=".7"/>
+<path class="rib b" d="M980 -10 C 920 160, 1040 320, 960 610" stroke="url(#g3)" stroke-width="14" opacity=".7"/></svg>`;
+const STREAMERS=Array.from({length:26},(_,i)=>{
+  const c=['#fde047','#f472b6','#a78bfa','#34d399','#60a5fa','#fb923c'][i%6];
+  return `<i class="streamer" style="left:${Math.random()*100}%;background:${c};animation-duration:${6+Math.random()*8}s;animation-delay:${-Math.random()*12}s"></i>`}).join('');
+
+function startDraw(restart){
+  const e=ev();
+  if(restart){if(!confirm('This clears all recorded winners for this event. Continue?'))return;e.winners=[];save()}
+  D={e,pi:Math.max(0,e.prizes.findIndex(p=>wins(e,p.id)<p.qty)),busy:false,last:null};
+  if(D.pi<0)D.pi=0;
+  $('draw').classList.add('on');
+  if(document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(()=>{});
+  renderDraw();
+}
+function exitDraw(){
+  if(D&&D.busy&&!confirm('Draw in progress. Exit anyway?'))return;
+  D=null;$('draw').classList.remove('on');$('draw').innerHTML='';
+  if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});
+  render();
+}
+
+function renderDraw(){
+  const {e,pi}=D,p=e.prizes[pi],box=$('draw');
+  const idleStrip=`<div></div><div>🎁 Ready to draw?</div><div></div>`;
+  box.innerHTML=`${RIBBONS}${STREAMERS}<button class="close" title="Exit (Esc)" onclick="exitDraw()">✕</button>
+  <div class="stage">
+    <div class="pz-step">Prize ${pi+1} of ${e.prizes.length}</div>
+    <div class="pz-wrap">${p.image?`<img class="pz-img" src="${p.image}">`:'<div class="pz-img">🎁</div>'}
+      <div><div class="pz-name">${esc(p.name)}</div>${p.desc?`<div class="pz-desc">${esc(p.desc)}</div>`:''}
+      <div class="pz-qty" id="qty"></div></div></div>
+    <div class="reel" id="reel"><div class="strip" id="strip">${idleStrip}</div></div>
+    <div class="winfo" id="winfo">&nbsp;</div>
+    <div class="chips" id="chips"></div>
+    <div class="ctrl" id="ctrl"></div>
+  </div>`;
+  const r=$('reel').style;r.setProperty('--h',Math.max(70,Math.min(110,innerHeight/8))+'px');
+  updateDraw();
+}
+function eligible(){
+  const {e}=D,taken=new Set(e.winners.map(w=>w.participantId));
+  return ui.settings.repeat?e.participants:e.participants.filter(p=>!taken.has(p.id));
+}
+function updateDraw(){
+  const {e,pi}=D,p=e.prizes[pi],got=e.winners.filter(w=>w.prizeId===p.id),left=p.qty-got.length;
+  $('qty').textContent=left>0?`${left} of ${p.qty} winner${p.qty>1?'s':''} to draw`:`All ${p.qty} winner${p.qty>1?'s':''} drawn!`;
+  $('chips').innerHTML=got.map(w=>`<div class="chip">🏆 ${esc(w.name)}${w.company?` · ${esc(w.company)}`:''}</div>`).join('');
+  const last=pi===e.prizes.length-1,d=ui.settings.duration;
+  let btn;
+  if(left>0){
+    const empty=eligible().length===0;
+    btn=empty?`<span class="winfo">No eligible participants left</span>${last?'':`<button class="go alt" onclick="nextPrize()">Skip →</button>`}`
+      :`<button class="go" onclick="spin()">${got.length?'🎲 Draw next':'🎲 DRAW!'}</button>`;
+  }else btn=last?`<button class="go alt" onclick="finish()">🎊 Finish</button>`:`<button class="go alt" onclick="nextPrize()">Reveal next prize →</button>`;
+  $('ctrl').innerHTML=`${btn}<div class="dsel">⏱ <select onchange="A.set('duration',+this.value)">${[3,4,5,6,7,8,9,10].map(n=>`<option ${n===d?'selected':''} value="${n}">${n}s</option>`).join('')}</select></div>`;
+}
+function spin(){
+  if(D.busy)return;
+  const pool=eligible(); if(!pool.length)return;
+  D.busy=true;
+  const win=pool[crypto.getRandomValues(new Uint32Array(1))[0]%pool.length];
+  const all=D.e.participants,dur=ui.settings.duration,n=Math.max(30,Math.round(dur*16));
+  const names=[];for(let i=0;i<n;i++)names.push(all[Math.floor(Math.random()*all.length)].name);
+  names[n-1]=win.name;
+  const strip=$('strip'),reel=$('reel'),H=parseFloat(getComputedStyle(reel).getPropertyValue('--h'));
+  reel.classList.remove('win');$('winfo').innerHTML='&nbsp;';
+  strip.style.transition='none';
+  strip.innerHTML=names.map(x=>`<div>${esc(x)}</div>`).join('')+'<div></div>';
+  strip.style.transform=`translateY(${H}px)`;
+  void strip.offsetHeight;
+  strip.style.transition=`transform ${dur}s cubic-bezier(.12,.62,.08,1)`;
+  strip.style.transform=`translateY(${-(n-2)*H}px)`;
+  $('ctrl').innerHTML=`<button class="go" disabled>Drawing…</button>`;
+  drumroll();const dr=setInterval(drumroll,900);
+  setTimeout(()=>{
+    clearInterval(dr);
+    D.e.winners.push({id:uid(),prizeId:D.e.prizes[D.pi].id,prizeName:D.e.prizes[D.pi].name,participantId:win.id,
+      name:win.name,email:win.email,phone:win.phone,company:win.company,at:Date.now()});
+    save();D.busy=false;
+    reel.classList.add('win');
+    $('winfo').textContent=`🎉 Congratulations ${win.name}!${win.company?'  ·  '+win.company:''}`;
+    fanfare();burst();setTimeout(()=>burst(80),500);
+    updateDraw();
+  },dur*1000+150);
+}
+function nextPrize(){if(D.busy)return;D.pi++;renderDraw()}
+function finish(){
+  if(D.busy)return;
+  const e=D.e,box=$('draw');
+  box.innerHTML=`${RIBBONS}${STREAMERS}<button class="close" onclick="exitDraw()">✕</button>
+  <div class="stage fin"><div style="font-size:70px">🎊🏆🎊</div><h1>Congratulations!</h1>
+    <div class="pz-desc" style="font-size:22px">All prizes have been given out. Thank you everyone for joining!</div>
+    <div class="list">${e.prizes.map(p=>{const w=e.winners.filter(x=>x.prizeId===p.id);return `<div style="margin:6px 0"><b>🎁 ${esc(p.name)}</b>: ${w.map(x=>esc(x.name)).join(', ')||'–'}</div>`}).join('')}</div>
+    <div class="ctrl"><button class="go alt" onclick="exitDraw()">Back to admin</button></div></div>`;
+  fanfare();for(let i=0;i<5;i++)setTimeout(()=>burst(120),i*500);
+  D.finished=true;
+}
+addEventListener('keydown',k=>{
+  if(!D)return;
+  if(k.key==='Escape'&&!document.fullscreenElement){exitDraw();return}
+  if(k.key===' '||k.key==='Enter'){
+    k.preventDefault();if(D.busy||D.finished)return;
+    const b=document.querySelector('#ctrl .go:not(:disabled)');if(b)b.click();
+  }
+});
+render();
+</script>
+</body>
+</html>
