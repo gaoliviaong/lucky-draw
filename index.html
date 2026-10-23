@@ -97,11 +97,21 @@ th{color:var(--muted);font-size:12px;text-transform:uppercase}
 .reel::before{content:"";position:absolute;left:0;right:0;top:var(--h);height:var(--h);background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--hl) 40%,transparent),transparent);border-top:3px solid var(--acc);border-bottom:3px solid var(--acc);z-index:1;pointer-events:none}
 .reel::after{content:"";position:absolute;inset:0;background:linear-gradient(var(--deep-a),transparent 30%,transparent 70%,var(--deep-a));z-index:2;pointer-events:none}
 .strip{position:absolute;left:0;right:0;top:0;will-change:transform}
-.strip div{height:var(--h);display:flex;align-items:center;justify-content:center;font-size:clamp(28px,5vw,54px);font-weight:800;padding:0 20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.strip div{height:var(--h);display:flex;align-items:center;justify-content:center;font-size:clamp(24px,4.2vw,48px);font-weight:800;padding:0 28px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.reel{animation:rise .5s ease-out}
+@keyframes rise{from{opacity:0;transform:translateY(28px) scale(.96)}}
 .reel.win{animation:pulse .9s ease-in-out 3}
+.reveal .pz-wrap{flex-direction:column;gap:20px}
+.reveal .pz-img{width:min(300px,34vh);height:min(300px,34vh);font-size:130px}
+.reveal .pz-name{font-size:clamp(34px,6vw,76px)}
+.reveal .pz-desc{font-size:clamp(16px,2.4vw,28px);margin:8px auto 0}
+.reveal .pz-qty{font-size:clamp(14px,1.8vw,20px)}
+.ready{font-size:clamp(20px,2.8vw,34px);font-weight:800;letter-spacing:3px;text-transform:uppercase;color:var(--acc);animation:blink 1.6s ease-in-out infinite}
+@keyframes blink{50%{opacity:.45}}
 @keyframes pulse{50%{box-shadow:0 0 90px #fde047,inset 0 0 40px #0006;transform:scale(1.03)}}
-.winfo{min-height:34px;font-size:clamp(16px,2vw,24px);color:var(--acc);font-weight:700;line-height:1.25}
-.winfo .wname{font-size:clamp(32px,5.5vw,68px);font-weight:900;color:#fff;text-shadow:0 0 24px var(--glow)}
+.winfo{min-height:34px;font-size:clamp(16px,2vw,24px);color:var(--acc);font-weight:700;line-height:1.25;min-height:clamp(34px,4.6vw,58px)}
+.winfo .wco{font-size:clamp(15px,1.8vw,22px);font-weight:600;color:#fff;opacity:.9}
+.winfo .wname{font-size:clamp(26px,3.8vw,46px);font-weight:900;color:#fff;text-shadow:0 0 24px var(--glow)}
 .chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:900px}
 .chip{background:#ffffff26;border:1px solid #ffffff44;border-radius:99px;padding:6px 16px;font-weight:700;animation:pop .5s cubic-bezier(.3,1.6,.5,1)}
 @keyframes pop{from{transform:scale(0)}}
@@ -461,6 +471,7 @@ function startDraw(restart){
   if(restart){if(!confirm('This clears all recorded winners for this event. Continue?'))return;e.winners=[];save()}
   D={e,pi:Math.max(0,e.prizes.findIndex(p=>wins(e,p.id)<p.qty)),busy:false,last:null};
   if(D.pi<0)D.pi=0;
+  D.phase=wins(e,e.prizes[D.pi].id)?'draw':'reveal';   // reveal = show the prize first, reel appears after DRAW
   $('draw').dataset.theme=ui.settings.theme;
   $('draw').classList.add('on');
   if(document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(()=>{});
@@ -473,7 +484,25 @@ function exitDraw(){
   render();
 }
 
+function renderReveal(){
+  const {e,pi}=D,p=e.prizes[pi],last=pi===e.prizes.length-1;
+  const btn=eligible().length
+    ?`<button class="go" onclick="startPrize()">🎲 DRAW!</button>`
+    :`<span class="winfo">No eligible participants left</span>${last?`<button class="go alt" onclick="finish()">🎊 Finish</button>`:`<button class="go alt" onclick="nextPrize()">Skip →</button>`}`;
+  $('draw').innerHTML=`${RIBBONS}${STREAMERS}<button class="close" title="Exit (Esc)" onclick="exitDraw()">✕</button>
+  <div class="stage reveal">
+    <div class="pz-step">Prize ${pi+1} of ${e.prizes.length}</div>
+    <div class="pz-wrap">${p.image?`<img class="pz-img" src="${p.image}">`:'<div class="pz-img">🎁</div>'}
+      <div><div class="pz-name">${esc(p.name)}</div>${p.desc?`<div class="pz-desc">${esc(p.desc)}</div>`:''}
+      <div class="pz-qty">${p.qty} winner${p.qty>1?'s':''} to draw</div></div></div>
+    <div class="ready">Ready to draw?</div>
+    <div class="ctrl" id="ctrl">${btn}${ctrlOpts()}</div>
+  </div>`;
+}
+function startPrize(){if(D.busy)return;D.phase='draw';renderDraw();spin()}
+
 function renderDraw(){
+  if(D.phase==='reveal')return renderReveal();
   const {e,pi}=D,p=e.prizes[pi],box=$('draw');
   const idleStrip=`<div></div><div>🎁 Ready to draw?</div><div></div>`;
   box.innerHTML=`${RIBBONS}${STREAMERS}<button class="close" title="Exit (Esc)" onclick="exitDraw()">✕</button>
@@ -494,6 +523,11 @@ function eligible(){
   const {e}=D,taken=new Set(e.winners.map(w=>w.participantId));
   return ui.settings.repeat?e.participants:e.participants.filter(p=>!taken.has(p.id));
 }
+function ctrlOpts(){
+  const d=ui.settings.duration;
+  return `<div class="dsel">⏱ <select onchange="A.set('duration',+this.value)">${[3,4,5,6,7,8,9,10].map(n=>`<option ${n===d?'selected':''} value="${n}">${n}s</option>`).join('')}</select></div>
+    <div class="dsel">🎨 <select onchange="A.setTheme(this.value)">${THEMES.map(([id,name])=>`<option ${id===ui.settings.theme?'selected':''} value="${id}">${name}</option>`).join('')}</select></div>`;
+}
 function updateDraw(){
   const {e,pi}=D,p=e.prizes[pi],got=e.winners.filter(w=>w.prizeId===p.id),left=p.qty-got.length;
   $('qty').textContent=left>0?`${left} of ${p.qty} winner${p.qty>1?'s':''} to draw`:`All ${p.qty} winner${p.qty>1?'s':''} drawn!`;
@@ -505,8 +539,7 @@ function updateDraw(){
     btn=empty?`<span class="winfo">No eligible participants left</span>${last?'':`<button class="go alt" onclick="nextPrize()">Skip →</button>`}`
       :`<button class="go" onclick="spin()">${got.length?'🎲 Draw next':'🎲 DRAW!'}</button>`;
   }else btn=last?`<button class="go alt" onclick="finish()">🎊 Finish</button>`:`<button class="go alt" onclick="nextPrize()">Reveal next prize →</button>`;
-  $('ctrl').innerHTML=`${btn}<div class="dsel">⏱ <select onchange="A.set('duration',+this.value)">${[3,4,5,6,7,8,9,10].map(n=>`<option ${n===d?'selected':''} value="${n}">${n}s</option>`).join('')}</select></div>
-    <div class="dsel">🎨 <select onchange="A.setTheme(this.value)">${THEMES.map(([id,name])=>`<option ${id===ui.settings.theme?'selected':''} value="${id}">${name}</option>`).join('')}</select></div>`;
+  $('ctrl').innerHTML=btn+ctrlOpts();
 }
 function spin(){
   if(D.busy)return;
@@ -532,12 +565,12 @@ function spin(){
       name:win.name,email:win.email,phone:win.phone,company:win.company,at:Date.now()});
     save();D.busy=false;
     reel.classList.add('win');
-    $('winfo').innerHTML=`🎉 Congratulations <span class="wname">${esc(win.name)}</span>!${win.company?'  ·  '+esc(win.company):''}`;
+    $('winfo').innerHTML=`🎉 Congratulations <span class="wname">${esc(win.name)}</span>!${win.company?`<div class="wco">${esc(win.company)}</div>`:''}`;
     fanfare();burst();setTimeout(()=>burst(80),500);
     updateDraw();
   },dur*1000+150);
 }
-function nextPrize(){if(D.busy)return;D.pi++;renderDraw()}
+function nextPrize(){if(D.busy)return;D.pi++;D.phase='reveal';renderDraw()}
 function finish(){
   if(D.busy)return;
   const e=D.e,box=$('draw');
